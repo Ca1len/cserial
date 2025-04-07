@@ -8,8 +8,6 @@ do
 
 	add_files("./gtest.cpp", "./test_cserial.cpp")
 
-	add_links("icserial")
-	add_includedirs("../include")
 	add_packages("gtest")
 	-- add_tests("gtests")
 end

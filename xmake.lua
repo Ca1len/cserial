@@ -1,3 +1,12 @@
+target("udp")
+do
+	set_languages("c99")
+	set_kind("$(kind)")
+	add_files("./src/udp.c")
+	add_includedirs("./include/", { public = true })
+end
+target_end()
+
 target("serial")
 do
 	set_languages("c99")

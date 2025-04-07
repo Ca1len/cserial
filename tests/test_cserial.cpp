@@ -1,4 +1,8 @@
+
+extern "C" {
 #include <cserial/cserial.h>
+}
+
 #include <gtest/gtest.h>
 #include <vector>
 
