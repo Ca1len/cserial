@@ -1,9 +1,6 @@
 #include <arpa/inet.h>
-#include <bits/sockaddr.h>
 #include <cserial/udp.h>
-#include <cstddef>
 #include <memory.h>
-#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -39,28 +36,22 @@ void fill_server_details(Socket_t *sock, sa_family_t sf, in_port_t port,
   sock->server_addr.sin_addr.s_addr = inet_addr(addr); // Localhost IP
 }
 
-int send_message(Socket_t *sock, const void *payload, size_t size) { return 0; }
-
-int main() {
-
-  // Message to send
-  const char *message = "Hello, UDP Server!";
-
-  // Send the message
-  sendto(int fd, const void *buf, size_t n, int flags,
-         const struct sockaddr *addr, socklen_t addr_len) int bytes_sent =
-      sendto(sock, message, strlen(message), 0, (struct sockaddr *)&server_addr,
-             sizeof(server_addr));
-
+int send_message(Socket_t *sock, const void *payload, size_t size) {
+  int bytes_sent =
+      sendto(sock->socket_descriptor, payload, size, 0,
+             (struct sockaddr *)&sock->server_addr, sizeof(sock->server_addr));
   if (bytes_sent < 0) {
     printf("Failed to send message\n");
-    close(sock);
+    close(sock->socket_descriptor);
     return 1;
   }
 
-  printf("Sent %d bytes: %s\n", bytes_sent, message);
-
-  // Clean up
-  close(sock);
   return 0;
+}
+
+void destruct_socket(Socket_t *sock) {
+  if (sock) {
+    close(sock->socket_descriptor);
+    free(sock);
+  }
 }
