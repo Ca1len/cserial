@@ -27,6 +27,8 @@ int Args_get_port(Args_t *args);
 void Args_delete(Args_t *);
 
 void parse_arguments(Args_t *args, int ac, const char *av[]);
+
+void Args_print(Args_t *arg);
 }
 
 TEST(application, arguments_default) {
@@ -42,12 +44,18 @@ TEST(application, parse_arguments) {
   Args_t *args = Args_create();
   std::vector<const char *> cmd{"-s", "/dev/ttyUSB0", "-b",  "12345", "-a",
                                 "l",  "-p",           "2222"};
+  auto s = cmd[1];
+  auto b = cmd[3];
+  auto a = cmd[5];
+  auto p = cmd[7];
 
   parse_arguments(args, cmd.size(), cmd.data());
+  Args_print(args);
 
-  EXPECT_EQ(strcmp(Args_get_serial(args), cmd[1]), 0);
-  EXPECT_EQ(Args_get_baudrate(args), atoi(cmd[3]));
-  EXPECT_EQ(strcmp(Args_get_udp_address(args), cmd[5]), 0);
-  EXPECT_EQ(Args_get_port(args), atoi(cmd[7]));
+  EXPECT_EQ(strcmp(Args_get_serial(args), s), 0);
+  EXPECT_EQ(Args_get_baudrate(args), atoi(b));
+  EXPECT_EQ(strcmp(Args_get_udp_address(args), a), 0);
+  EXPECT_EQ(Args_get_port(args), atoi(p));
+
   Args_delete(args);
 }

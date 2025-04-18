@@ -1,6 +1,7 @@
 #include <cserial/cserial.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <unistd.h>
 
 struct Args_s {
@@ -18,6 +19,8 @@ char *Args_get_serial(Args_t *args);
 int Args_get_baudrate(Args_t *args);
 char *Args_get_udp_address(Args_t *args);
 int Args_get_port(Args_t *args);
+
+void Args_print(Args_t *arg);
 
 void parse_arguments(Args_t *args, int ac, char *av[]);
 
@@ -44,21 +47,25 @@ int Args_get_baudrate(Args_t *args) { return args->baudrate; }
 char *Args_get_udp_address(Args_t *args) { return args->udp_address; }
 int Args_get_port(Args_t *args) { return args->port; }
 
-void print_help(Args_t *args) {
-  printf("Usage for help message: cserial -h\n");
-  printf("Usage: cserial -s <path/to/serial> -b <baudrate> -a <udp address> -p "
-         "<port>\n");
-  printf("Defaults(optional):\n");
+void print_values(Args_t *args) {
   printf("\t-s: %s\n", args->serial);
   printf("\t-b: %d\n", args->baudrate);
   printf("\t-a: %s\n", args->udp_address);
   printf("\t-p: %d\n", args->port);
 }
 
+void print_help(Args_t *args) {
+  printf("Usage for help message: cserial -h\n");
+  printf("Usage: cserial -s <path/to/serial> -b <baudrate> -a <udp address> -p "
+         "<port>\n");
+  printf("Defaults(optional):\n");
+  print_values(args);
+}
+
 void parse_arguments(Args_t *args, int ac, char *av[]) {
   int c;
 
-  while ((c = getopt(ac, av, "s::b::a::p::h")) != -1)
+  while ((c = getopt(ac, av, "s:b:a:p:h")) != -1)
     switch (c) {
     case 's':
       args->serial = optarg;
@@ -76,17 +83,19 @@ void parse_arguments(Args_t *args, int ac, char *av[]) {
       print_help(args);
       abort();
     case '?':
+      fprintf(stderr, "Error: Got unrecognized option.\n");
       print_help(args);
-      return;
+      abort();
     default:
       abort();
     }
 }
 
-void Args_delete(Args_t *args) {
-  if (!args) {
-    free(args->serial);
-    free(args->udp_address);
-  }
-  free(args);
+void Args_print(Args_t *arg) {
+  printf("Serial: %s\n", arg->serial);
+  printf("Baudrate: %d\n", arg->baudrate);
+  printf("UDP address: %s\n", arg->udp_address);
+  printf("Port: %d\n", arg->port);
 }
+
+void Args_delete(Args_t *args) { free(args); }

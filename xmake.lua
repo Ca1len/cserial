@@ -1,3 +1,5 @@
+add_rules("mode.debug", "mode.release")
+
 target("udp")
 do
 	set_languages("gnu99")

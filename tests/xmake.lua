@@ -1,3 +1,5 @@
+add_rules("mode.debug", "mode.release")
+
 add_requires("gtest", { system = false })
 
 target("tests")
