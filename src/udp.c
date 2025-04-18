@@ -30,7 +30,6 @@ Socket_t *create_udp_socket() {
 
 void fill_server_details(Socket_t *sock, sa_family_t sf, in_port_t port,
                          const char *addr) {
-
   sock->server_addr.sin_family = sf;
   sock->server_addr.sin_port = htons(port);            // Port number
   sock->server_addr.sin_addr.s_addr = inet_addr(addr); // Localhost IP

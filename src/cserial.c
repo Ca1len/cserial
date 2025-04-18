@@ -1,7 +1,6 @@
 #include <cserial/cserial.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <unistd.h>
 
 struct Args_s {
@@ -26,7 +25,23 @@ void parse_arguments(Args_t *args, int ac, char *av[]);
 
 void Args_delete(Args_t *args);
 
-int cserial_run(int ac, const char *av[]) { return 0; }
+void print_values(Args_t *args) {
+  printf("\t-s: %s\n", args->serial);
+  printf("\t-b: %d\n", args->baudrate);
+  printf("\t-a: %s\n", args->udp_address);
+  printf("\t-p: %d\n", args->port);
+}
+
+int cserial_run(int ac, char *av[]) {
+  Args_t *args = Args_create();
+  parse_arguments(args, ac, av);
+
+  printf("Parsed arguments:\n");
+  print_values(args);
+
+  Args_delete(args);
+  return 0;
+}
 
 Args_t *Args_create() {
   Args_t *args = (Args_t *)calloc(1, sizeof(Args_t));
@@ -46,13 +61,6 @@ char *Args_get_serial(Args_t *args) { return args->serial; }
 int Args_get_baudrate(Args_t *args) { return args->baudrate; }
 char *Args_get_udp_address(Args_t *args) { return args->udp_address; }
 int Args_get_port(Args_t *args) { return args->port; }
-
-void print_values(Args_t *args) {
-  printf("\t-s: %s\n", args->serial);
-  printf("\t-b: %d\n", args->baudrate);
-  printf("\t-a: %s\n", args->udp_address);
-  printf("\t-p: %d\n", args->port);
-}
 
 void print_help(Args_t *args) {
   printf("Usage for help message: cserial -h\n");
