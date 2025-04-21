@@ -50,6 +50,7 @@ int send_message(Socket_t *sock, const void *payload, size_t size) {
 
 void destruct_socket(Socket_t *sock) {
   if (sock) {
+    shutdown(sock->socket_descriptor, SHUT_RDWR);
     close(sock->socket_descriptor);
     free(sock);
   }

@@ -7,7 +7,6 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <sys/ioctl.h>
 #include <sys/select.h>
 // #include <termios.h> /* POSIX terminal control definitions */
@@ -22,14 +21,14 @@ Serial_t *open_serial(const char *serial_name, int speed) {
 
   Serial_t *serial = (Serial_t *)calloc(1, sizeof(Serial_t));
   if (!serial) {
-    fprintf(stderr, "Error during memory allocation for Serial_t");
+    fprintf(stderr, "Error during memory allocation for Serial_t\n");
     return NULL;
   }
 
   serial->descriptor = open(serial_name, O_RDWR);
 
   if (serial->descriptor == -1) {
-    fprintf(stderr, "Error during serial open");
+    fprintf(stderr, "Error during serial open\n");
     return NULL;
   }
 
@@ -44,68 +43,44 @@ Serial_t *open_serial(const char *serial_name, int speed) {
   if (r == 0) {
     printf("Serial speed changed successfully.\n");
   } else {
-    perror("ioctl failed change speed");
+    perror("ioctl failed change speed\n");
     return NULL;
   }
 
   return serial;
 }
 
-int read_port(int fd, unsigned char *buf, size_t len, struct timeval *tout) {
+int Serial_read(Serial_t *s, CircularBuffer *buffer, struct timeval *tout) {
   fd_set inputs;
   int num, ret;
+
+  unsigned char value;
 
   num = 0;
 
   FD_ZERO(&inputs);
-  FD_SET(fd, &inputs);
+  FD_SET(s->descriptor, &inputs);
 
-  ret = select(fd + 1, &inputs, (fd_set *)NULL, (fd_set *)NULL, tout);
+  ret =
+      select(s->descriptor + 1, &inputs, (fd_set *)NULL, (fd_set *)NULL, tout);
   // printf("select = %d\n", ret);
   if (ret < 0) {
-    perror("select error!!");
+    perror("select error!!\n");
     return ret;
   }
   if (ret > 0) {
-    if (FD_ISSET(fd, &inputs)) {
-      num = read(fd, buf, len);
+    if (FD_ISSET(s->descriptor, &inputs)) {
+      num = read(s->descriptor, &value, 1);
+      if (num > 0) {
+        write_buffer(buffer, value);
+      }
     }
   }
 
   return num;
 }
 
-int main(int argc, char *argv[]) {
-  int fd, speed;
-  struct timeval tout;
-  unsigned char send_ch, recv_ch;
-
-  if (argc != 3) {
-    printf("%s device speed\n\nSet speed for a serial device.\nFor instance:\n "
-           "   %s /dev/ttyUSB0 250000\n",
-           argv[0], argv[0]);
-    return -1;
-  }
-
-  fd = open(argv[1], O_RDWR);
-
-  speed = atoi(argv[2]);
-
-  // Test code
-  sleep(2);
-
-  printf("Test start\n");
-
-  send_ch = '0';
-  for (;;) {
-    tout.tv_sec = 1;
-    tout.tv_usec = 100 * 1000;
-    read_port(fd, &recv_ch, 1, &tout);
-    if (recv_ch == 'X')
-      break;
-
-    sleep(1);
-  }
-
-  return 0;
+void Serial_destruct(Serial_t *s) {
+  close(s->descriptor);
+  free(s);
 }

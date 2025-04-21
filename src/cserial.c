@@ -1,4 +1,9 @@
+#include <cserial/circularbuffer.h>
 #include <cserial/cserial.h>
+#include <cserial/serial.h>
+#include <cserial/udp.h>
+#include <pthread.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -32,6 +37,27 @@ void print_values(Args_t *args) {
   printf("\t-p: %d\n", args->port);
 }
 
+volatile static bool quit = false;
+
+static void terminate(int sig) {
+  quit = true;
+  (void)sig;
+}
+
+typedef struct {
+  CircularBuffer *cb;
+  Serial_t *serial;
+  struct timeval tout;
+} ProducerResources;
+
+void *producer(void *arg) {
+  ProducerResources *scb = (ProducerResources *)arg;
+  while (!quit) {
+    Serial_read(scb->serial, scb->cb, &scb->tout);
+  }
+  return NULL;
+}
+
 int cserial_run(int ac, char *av[]) {
   Args_t *args = Args_create();
   parse_arguments(args, ac, av);
@@ -39,7 +65,46 @@ int cserial_run(int ac, char *av[]) {
   printf("Parsed arguments:\n");
   print_values(args);
 
+  signal(SIGQUIT, terminate);
+  signal(SIGTERM, terminate);
+  signal(SIGINT, terminate);
+
+  CircularBuffer cbuffer;
+  init_buffer(&cbuffer);
+
+  Serial_t *serial = open_serial(args->serial, args->baudrate);
+  if (!serial) {
+    fprintf(stderr, "Exiting, cannot open serial.\n");
+    exit(-1);
+  }
+
+  Socket_t *sock = create_udp_socket();
+  if (!serial) {
+    fprintf(stderr, "Exiting, cannot create socket.\n");
+    exit(-1);
+  }
+  fill_server_details(sock, AF_INET, args->port, args->udp_address);
+
+  ProducerResources serial_producer;
+  serial_producer.serial = serial;
+  serial_producer.cb = &cbuffer;
+  serial_producer.tout.tv_sec = 1;
+  serial_producer.tout.tv_usec = 100 * 1000;
+  pthread_t prod_thread;
+  pthread_create(&prod_thread, NULL, producer, &serial_producer);
+
+  while (!quit) {
+    unsigned char payload = read_buffer(&cbuffer);
+    send_message(sock, &payload, 1);
+  }
+
+  pthread_join(prod_thread, NULL);
+
+  destruct_socket(sock);
+  Serial_destruct(serial);
+  destroy_buffer(&cbuffer);
   Args_delete(args);
+  printf("Complete exit.\n");
   return 0;
 }
 

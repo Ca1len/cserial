@@ -1,4 +1,5 @@
-
+#pragma once
+#include <cserial/circularbuffer.h>
 
 typedef struct Serial_s Serial_t;
 
@@ -7,3 +8,7 @@ typedef struct Serial_s Serial_t;
  * @param speed serial baudrate
  */
 Serial_t *open_serial(const char *serial_name, int speed);
+
+int Serial_read(Serial_t *s, CircularBuffer *buffer, struct timeval *tout);
+
+void Serial_destruct(Serial_t *s);
