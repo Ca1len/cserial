@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/select.h>
 #include <unistd.h>
 // #include <termios.h>    /* POSIX terminal control definitions */
 
